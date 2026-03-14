@@ -23,3 +23,11 @@ router.put("/update/:id", verifyToken, isAdmin, updateTrip);          // update 
 router.delete("/delete/:id", verifyToken, isAdmin, deleteTrip);       //delete Trip ROUTE
 
 module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
+// module.exports = router;
