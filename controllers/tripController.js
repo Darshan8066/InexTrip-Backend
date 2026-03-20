@@ -6,8 +6,6 @@ const user = require("../models/user");
 
 const createTripBatch = async (req, res) => {
 
-    // req.files contains uploaded image data file.path contains Cloudinary image URL
-    // const imageUrls = req.files?.map(file => file.path) || [];
     try {
         const newTrip = new Trip({
             ...req.body,

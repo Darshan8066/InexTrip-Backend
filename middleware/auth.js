@@ -1,4 +1,3 @@
-
 // Import jsonwebtoken package Used to verify and decode JWT tokens
 const jwt = require('jsonwebtoken');
 
@@ -23,7 +22,7 @@ const verifyToken = (req, res, next) => {
     const token = authHeader.split(" ")[1];  // Get token from Authorization header
 
     if (!token) {    // If no token is provided
-        return res.status(403).json({
+        return res.status(401).json({
             message: "No token provided. Access Denied."
         });
     }
@@ -67,4 +66,4 @@ const validateTripData = (req, res, next) => {
     next();
 };
 
-module.exports = { verifyToken, isAdmin, validateTripData }
+module.exports = { verifyToken, isAdmin, validateTripData };

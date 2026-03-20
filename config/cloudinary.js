@@ -21,26 +21,29 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
 
-    const now = new Date();
+    // const now = new Date();
 
     // Format date parts with leading zero
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const date = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+    // const year = now.getFullYear();
+    // const month = String(now.getMonth() + 1).padStart(2, '0');
+    // const date = String(now.getDate()).padStart(2, '0');
+    // const hours = String(now.getHours()).padStart(2, '0');
+    // const minutes = String(now.getMinutes()).padStart(2, '0');
+    // const seconds = String(now.getSeconds()).padStart(2, '0');
 
     // Final format: YYYYMMDD_HHMMSS
-    const formattedTimestamp = `${year}${month}${date}_${hours}${minutes}${seconds}`;
+    // const formattedTimestamp = `${year}${month}${date}_${hours}${minutes}${seconds}`;
 
     return {
       folder: "tripplanner",
       resource_type: "image",
-      allowed_formats: ["jpg", "png", "jpeg", "webp"],
+      allowed_formats: ["jpg", "png", "jpeg", "webp", "PNG"],
+      public_id: `user_${req.user.id}`,
+      overwrite: true,
 
       // Example: 20260301_231534
-      public_id: formattedTimestamp
+      // public_id: formattedTimestamp
+
     };
   },
 });

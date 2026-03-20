@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user")
-const bcrypt = require("bcrypt")
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
+const Trip = require("../models/trip");
+const Payment = require("../models/payment");
 
 
 // REGISTER USER  (POST METHOD)
@@ -20,7 +22,7 @@ const registerUser = async (req, res) => {
             email,
             mobile,
             password: hashedPassword,
-          
+
         });
 
         // Generate JWT token
@@ -64,6 +66,34 @@ const loginUser = async (req, res) => {
     res.status(201).json({ token, user: userData });
 }
 
+const toggleFavourite = async (req, res) => {
+    try {
+        // console.log("toggleFavourite");
+        const id = req.user.id;
+        const { tripId } = req.body;
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const alreadyFavourite = user.favourites.includes(tripId);
+
+        if (alreadyFavourite) {
+            user.favourites = user.favourites.filter(
+                id => id.toString() !== tripId
+            );
+            console.log("alreadyFavourite : ", user.favourites);
+        } else {
+
+            user.favourites.push(tripId);
+        }
+
+        await user.save();
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
 
 // Get MEthod
 
@@ -166,4 +196,59 @@ const deleteUser = async (req, res) => {
     };
 }
 
-module.exports = { registerUser, loginUser, getUser, updatedUser, deleteUser, getUserById }
+const getAdminStats = async (req, res) => {
+    try {
+        // 🔹 Total Users
+        const totalUsers = await User.countDocuments();
+
+        // 🔹 Total Trips
+        const totalTrips = await Trip.countDocuments();
+
+        // 🔹 Total Revenue
+        const payments = await Payment.find();
+        const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+
+        const monthlyData = await Payment.aggregate([
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    revenue: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // 🔥 Month names array
+        const monthNames = [
+            "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
+
+        // 🔥 Convert to required format
+        const monthlyRevenue = monthlyData.map(item => ({
+            name: monthNames[item._id],
+            revenue: item.revenue
+        }));
+
+
+        res.status(200).json({
+            success: true,
+            totalUsers,
+            totalTrips,
+            totalRevenue,
+            monthlyRevenue,
+            message: "Admin stats fetched successfully"
+        });
+
+
+    } catch (error) {
+        res
+            .status(400)
+            .json({ message: error.message });
+
+    }
+}
+
+module.exports = { registerUser, loginUser, toggleFavourite, getUser, getAdminStats, updatedUser, deleteUser, getUserById }

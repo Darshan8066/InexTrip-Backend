@@ -8,7 +8,7 @@ const router = express.Router();                 // Create router
 const upload = multer({                    // Configure multer to use Cloudinary storage
     storage,
     limits: { fileSize: 5 * 1024 * 1024 }   // 5MB or less size photo upload
-});     
+});
 
 //  SINGLE IMAGE UPLOAD ROUTE
 router.post("/upload", verifyToken, (req, res) => {
@@ -21,6 +21,7 @@ router.post("/upload", verifyToken, (req, res) => {
                 message: err.message || "Upload failed"
             });
         }
+        console.log("file : ", req.file);
         if (!req.file) {
             return res.status(400).json({
                 message: "No file uploaded"
@@ -32,10 +33,3 @@ router.post("/upload", verifyToken, (req, res) => {
     });
 });
 module.exports = router;
-// module.exports = router;
-// module.exports = router;
-// module.exports = router;
-// module.exports = router;
-// module.exports = router;
-// module.exports = router;
-// module.exports = router;

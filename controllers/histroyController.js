@@ -6,7 +6,7 @@ const saveHistory = async (req, res) => {
     try {
 
         const history = new History(req.body);
-
+        console.log("saveHistory : ", history)
         await history.save();
 
         res.status(201).json({
@@ -25,12 +25,13 @@ const saveHistory = async (req, res) => {
     }
 };
 
-
-const getHistoryByUserId = async (req, res) => {
+const getHistoryByUser = async (req, res) => {
     try {
         const userId = req.user.id;
-        const history = await History.find({ userId });
-        console.log("getHistoryByUserId : ", history)
+        const history = await History.find({ userId })
+            .populate("tripId")
+            .populate("paymentId")
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -63,7 +64,7 @@ const clearHistory = async (req, res) => {
         });
 
     } catch (error) {
-        
+
         res.status(500).json({
             success: false,
             message: error.message
@@ -73,4 +74,4 @@ const clearHistory = async (req, res) => {
 };
 
 
-module.exports = { saveHistory, getHistoryByUserId, clearHistory };
+module.exports = { saveHistory, getHistoryByUser, clearHistory };

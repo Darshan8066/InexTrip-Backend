@@ -13,6 +13,7 @@ const tripRoutes = require("./routes/tripRouts");
 const uploadRoutes = require("./routes/uploadRoutes");
 const paymentRouts = require("./routes/paymentRouts");
 const historyRoutes = require("./routes/historyRoutes");
+const reviewRoutes = require("./routes/reviewRoutes")
 
 // Create Express application
 const app = express()
@@ -36,7 +37,7 @@ app.use('/trip', tripRoutes)
 app.use('/payments', paymentRouts)
 app.use('/upload', uploadRoutes)
 app.use('/history', historyRoutes)
-
+app.use('/review', reviewRoutes)
 
 /* =======================
    DATABASE CONNECTION
