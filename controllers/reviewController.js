@@ -71,7 +71,6 @@ exports.fetchReviewByTripId = async (req, res) => {
     }
 };
 
-
 exports.fetchReview = async (req, res) => {
 
     try {
