@@ -8,7 +8,6 @@ const UserSchema = new mongoose.Schema({
     mobile: { type: Number, required: true },
     password: { type: String, required: true, unique: true },
     role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
-    // profilePhoto: { type: String, default: 'https://i.pravatar.cc/150' },
     profilePhoto: { type: String,},
     favourites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Trip' }],
     createdAt: { type: Date, default: Date.now }

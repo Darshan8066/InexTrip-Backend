@@ -1,8 +1,10 @@
 const Review = require("../models/review");
+const User = require("../models/user");
 
 exports.createReview = async (req, res) => {
     try {
         const userId = req.user.id;
+        const user = await User.findById(userId);
         const { rating, comment, tripId } = req.body;
 
         // ✅ Basic validation
@@ -16,6 +18,8 @@ exports.createReview = async (req, res) => {
         // ✅ Create review
         const review = await Review.create({
             userId,
+            fullname: user.fullname,
+            profilePhoto: user.profilePhoto,
             tripId,
             rating,
             comment,
@@ -74,10 +78,9 @@ exports.fetchReviewByTripId = async (req, res) => {
 exports.fetchReview = async (req, res) => {
 
     try {
-        // const response = await Review.find();
-
         const reviews = await Review.find()
-            .populate("userId", "name profilePhoto");
+            .populate("userId", "fullname profilePhoto")
+            .populate("tripId", "category from to");
 
         res.status(200).json({
             success: true,

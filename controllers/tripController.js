@@ -22,7 +22,7 @@ const createTripBatch = async (req, res) => {
 
 const getTrip = async (req, res) => {
     try {
-        const trips = await Trip.find();
+        const trips = await Trip.find().sort({ createdAt: -1 });
        
         if (!trips || trips.length === 0) {            // If no trips found in database, check if data exists
             return res.status(404).json({

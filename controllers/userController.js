@@ -26,9 +26,16 @@ const registerUser = async (req, res) => {
         });
 
         // Generate JWT token
-        const token = jwt.sign({ id: user._id, email: user.email },
-            "securecode",       // Secret key 
-            { expiresIn: "1d" })    // Token valid for 1 day
+        // const token = jwt.sign({ id: user._id, email: user.email },
+        //     "securecode",       // Secret key 
+        //     { expiresIn: "1d" })    // Token valid for 1 day
+
+
+        const token = jwt.sign({
+            id: user._id, email: user.email, role: user.role
+        },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" })
         await user.save();          // Save user in database
         res
             .status(201)
@@ -51,7 +58,7 @@ const loginUser = async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid Credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password)    // Compare entered password with hashed password
-    if (!isMatch) return res.status(400).json({ message: "Invalid Credentials" })
+    if (!isMatch) return res.status(400).json({ message: "Invalid Password" })
 
     // Generate JWT token with role also included
     const token = jwt.sign({
@@ -117,7 +124,6 @@ const getUser = async (req, res) => {
 const getUserById = async (req, res) => {
     try {
         const id = req.user.id;
-
         const user = await User.findById(id).select("-password");     // Find user by ID and exclude password
         if (!user) {
             return res.status(400).json({ message: "user not Found" })
@@ -177,24 +183,6 @@ const updatedUser = async (req, res) => {
 // Delete MEthod
 
 
-const deleteUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const user = await User.findById(id)
-        if (!user) {
-            return res.status(400).json({ message: "User not Found" });
-        }
-        await User.findByIdAndDelete(id);
-        res.status(200).json({
-            success: true,
-            message: "User deleted Successfully"
-        })
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    };
-}
 
 const getAdminStats = async (req, res) => {
     try {
@@ -251,4 +239,22 @@ const getAdminStats = async (req, res) => {
     }
 }
 
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const user = await User.findById(id)
+        if (!user) {
+            return res.status(400).json({ message: "User not Found" });
+        }
+        await User.findByIdAndDelete(id);
+        res.status(200).json({
+            success: true,
+            message: "User deleted Successfully"
+        })
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    };
+}
 module.exports = { registerUser, loginUser, toggleFavourite, getUser, getAdminStats, updatedUser, deleteUser, getUserById }
