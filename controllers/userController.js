@@ -3,6 +3,7 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const Trip = require("../models/trip");
 const Payment = require("../models/payment");
+const Review = require("../models/review");
 
 
 // REGISTER USER  (POST METHOD)
@@ -239,15 +240,57 @@ const getAdminStats = async (req, res) => {
     }
 }
 
-const deleteUser = async (req, res) => {
-    try {
-        const { id } = req.params;
+// const deleteUser = async (req, res) => {
+//     try {
+//         const { id } = req.params;
 
-        const user = await User.findById(id)
-        if (!user) {
-            return res.status(400).json({ message: "User not Found" });
-        }
-        await User.findByIdAndDelete(id);
+//         const user = await User.findById(id)
+//         if (!user) {
+//             return res.status(400).json({ message: "User not Found" });
+//         }
+//         await User.findByIdAndDelete(id);
+//         res.status(200).json({
+//             success: true,
+//             message: "User deleted Successfully"
+//         })
+
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     };
+// }
+
+const deleteUserAccount = async (req, res) => {
+
+    const userId = req.params.id;
+    try {
+        const user = await User.findById(userId);
+        if (!user) throw new Error("User not found");
+
+        // 1. Reviews — userId ref remove
+        await Review.updateMany(
+            { userId },
+            { $set: { fullname: user.fullname, profilePhoto: user.profilePhoto } }
+        );
+
+        // 2. Trips — store creator info before removing ref
+        await Trip.updateMany(
+            { createdBy: userId },
+            {
+                $set: {
+                    fullname: user.fullname,
+                    profilePhoto: user.profilePhoto
+                }
+            }
+        );
+
+        // 3. Payment — just flag it
+        await Payment.updateMany(
+            { userId },
+            { $set: { fullname: user.fullname, profilePhoto: user.profilePhoto } }
+        );
+
+        // 4. Finally delete the user
+        await User.findByIdAndDelete(userId);
         res.status(200).json({
             success: true,
             message: "User deleted Successfully"
@@ -256,5 +299,6 @@ const deleteUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     };
-}
-module.exports = { registerUser, loginUser, toggleFavourite, getUser, getAdminStats, updatedUser, deleteUser, getUserById }
+};
+
+module.exports = { registerUser, loginUser, toggleFavourite, getUser, getAdminStats, updatedUser, getUserById, deleteUserAccount }

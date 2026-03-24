@@ -28,9 +28,10 @@ const verifyToken = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);           
+        const decoded = jwt.verify(token, JWT_SECRET);
         // console.log("decode:::::",decoded)     // Verify token using secret key
-        req.user = decoded;                                                        // Attach decoded data (id, email, role) to request
+        console.log("decoded : ")                                                       // Attach decoded data (id, email, role) to request
+        req.user = decoded;
         next();                                                                   // Move to next middleware or controller
     } catch (err) {                                                              // If token is invalid or expired
         return res.status(401).json({ message: "Unauthorized: Invalid or expired token." });
@@ -40,7 +41,7 @@ const verifyToken = (req, res, next) => {
 // ADMIN AUTHORIZATION MIDDLEWARE
 
 const isAdmin = (req, res, next) => {
-    console.log("user",req.user)
+    console.log("user", req.user)
     if (req.user && req.user.role === 'ADMIN') {       // Check if user exists and role is ADMIN
         next();
     } else {

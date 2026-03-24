@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();    // Create router
 
-const { registerUser, loginUser, getUser, updatedUser, deleteUser, getUserById, toggleFavourite, getAdminStats } = require("../controllers/userController");
+const { registerUser, loginUser, getUser, updatedUser, getUserById, toggleFavourite, getAdminStats, deleteUserAccount } = require("../controllers/userController");
 const { verifyToken } = require("../middleware/auth");
 
 //Post
@@ -19,6 +19,7 @@ router.get("/stats", verifyToken, getAdminStats);
 router.put("/update", verifyToken, updatedUser);
 
 //delete
-router.delete("/delete/:id", deleteUser);
+// router.delete("/delete/:id", deleteUser);
+router.delete("/delete/:id", deleteUserAccount);
 
 module.exports = router;

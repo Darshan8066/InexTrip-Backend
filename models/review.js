@@ -4,7 +4,7 @@ const ReviewSchema = new mongoose.Schema({
 
     tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    fullname: { type: String, required: true },
+    fullname: { type: String },
     profilePhoto: { type: String },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true, trim: true }
@@ -13,6 +13,6 @@ const ReviewSchema = new mongoose.Schema({
 })
 
 // 👇 🔥 HERE you add index
-ReviewSchema.index({ tripId: 1, userId: 1 }, { unique: true });
+ReviewSchema.index({ tripId: 1, userId: 1 }, { unique: true, partialFilterExpression: { userId: { $ne: null } } });
 
 module.exports = mongoose.model('Review', ReviewSchema);

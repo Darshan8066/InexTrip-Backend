@@ -3,11 +3,12 @@ const router = express.Router();
 
 
 const { verifyToken } = require("../middleware/auth");
-const { fetchReview, createReview, fetchReviewByTripId } = require("../controllers/reviewController");
+const { fetchReview, createReview, fetchReviewByTripId, fetchUserReviews } = require("../controllers/reviewController");
 
 router.get("/", fetchReview);
-router.post("/create/", verifyToken, createReview);
-router.get("/:tripId", fetchReviewByTripId);
+router.post("/create", verifyToken, createReview);
+router.get("/trip/:tripId", fetchReviewByTripId);
+router.get("/user", verifyToken , fetchUserReviews);
 
 
 

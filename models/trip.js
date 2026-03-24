@@ -20,6 +20,8 @@ const TripSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
+    fullname: { type: String },
+    profilePhoto: { type: String },
     tripType: { type: String, enum: ["AI", "JOIN"], required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },
@@ -36,9 +38,9 @@ const TripSchema = new mongoose.Schema({
     images: [String],
     description: String,
     category: { type: String, enum: ['Heritage', 'Mountains', 'Beaches', 'Cities'] },
-    createdAt: { type: Number, default: Date.now }
-});
-
+}, {
+    timestamps: true   // ✅ automatically adds createdAt & updatedAt
+})
 
 
 module.exports = mongoose.model('Trip', TripSchema);    

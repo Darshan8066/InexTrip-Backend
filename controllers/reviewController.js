@@ -1,10 +1,10 @@
 const Review = require("../models/review");
-const User = require("../models/user");
+// const User = require("../models/user");
 
 exports.createReview = async (req, res) => {
     try {
         const userId = req.user.id;
-        const user = await User.findById(userId);
+        // const user = await User.findById(userId);
         const { rating, comment, tripId } = req.body;
 
         // ✅ Basic validation
@@ -18,8 +18,8 @@ exports.createReview = async (req, res) => {
         // ✅ Create review
         const review = await Review.create({
             userId,
-            fullname: user.fullname,
-            profilePhoto: user.profilePhoto,
+            // fullname: user.fullname,
+            // profilePhoto: user.profilePhoto,
             tripId,
             rating,
             comment,
@@ -89,5 +89,35 @@ exports.fetchReview = async (req, res) => {
         });
     } catch (error) {
         console.log(error)
+    }
+}
+
+
+exports.fetchUserReviews = async (req, res) => {
+
+    try {
+
+
+        const userId = req.user.id
+        console.log("fetchUserReviews : ", userId)
+        const reviews = await Review.find({ userId })
+        console.log("reviews : ", reviews)
+        if (!reviews || reviews.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No reviews found for this user"
+            });
+        }
+        res.status(200).json({
+            success: true,
+            count: reviews.length,
+            reviews,
+            message: "User reviews fetched successfully"
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Something went wrong while fetching reviews"
+        })
     }
 }
