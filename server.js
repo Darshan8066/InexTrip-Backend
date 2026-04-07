@@ -14,6 +14,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const paymentRouts = require("./routes/paymentRouts");
 const historyRoutes = require("./routes/historyRoutes");
 const reviewRoutes = require("./routes/reviewRoutes")
+const authRoutes = require("./routes/authRoutes")
 
 // Create Express application
 const app = express()
@@ -38,6 +39,7 @@ app.use('/payments', paymentRouts)
 app.use('/upload', uploadRoutes)
 app.use('/history', historyRoutes)
 app.use('/review', reviewRoutes)
+app.use('/api/auth', authRoutes)
 
 /* =======================
    DATABASE CONNECTION

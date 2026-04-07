@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post("/save", saveHistory);
 router.get("/get", verifyToken, getHistoryByUser);
-router.get("/clear", verifyToken, clearHistory);
+router.delete("/clear", verifyToken, clearHistory);
 
 
 module.exports = router;    
