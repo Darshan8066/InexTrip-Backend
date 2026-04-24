@@ -20,8 +20,6 @@ const TripSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
-    fullname: { type: String },
-    profilePhoto: { type: String },
     tripType: { type: String, enum: ["AI", "JOIN"], required: true },
     from: { type: String, required: true },
     to: { type: String, required: true },
@@ -29,15 +27,19 @@ const TripSchema = new mongoose.Schema({
     endDate: { type: Date, required: true },
     pickupPoint: { type: String },
     dropPoint: { type: String },
-    budget: { type: Number, required: true },
+    budget: { type: String, required: true },
     price: { type: Number, required: true },
-    transportMode: { type: String, enum: ["Bus", "Train", "Plane"] },
+    transportMode: { type: String, enum: ["Bus", "Train", "Plane","Car"] },
     dayPlan: [DayPlanSchema],
     hotels: [String],
     foodPlace: [String],
     images: [String],
     description: String,
     category: { type: String, enum: ['Heritage', 'Mountains', 'Beaches', 'Cities'] },
+    travelers:{ type: Number},
+    tripPace:{ type: String},
+    fullname: { type: String },
+    profilePhoto: { type: String },
 }, {
     timestamps: true   // ✅ automatically adds createdAt & updatedAt
 })

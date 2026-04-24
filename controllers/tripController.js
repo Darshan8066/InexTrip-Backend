@@ -1,91 +1,63 @@
 const mongoose = require("mongoose");
 const Trip = require("../models/trip");
-// NOTE: Removed unused `user` import — add back only if needed for population
+const { geminiService } = require("../services/geminiService");
+const user = require("../models/user");
 
 // ─── Helper: validate MongoDB ObjectId ───────────────────────────────────────
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // ─── CREATE TRIP (POST) ───────────────────────────────────────────────────────
+
 // const createTripBatch = async (req, res) => {
+
 //   try {
-//     const {
-//       title,
-//       description,
-//       price,
-//       location,
-//       duration,
-//       maxGroupSize,
-//       images,
-//       category,
-//     } = req.body;
-
-//     // FIX: Validate required fields instead of blindly spreading req.body
-//     if (!title || !description || !price || !location || !duration) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "title, description, price, location, and duration are required",
-//       });
-//     }
-
-//     if (typeof price !== "number" || price <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Price must be a positive number",
-//       });
-//     }
-
-//     if (typeof duration !== "number" || duration <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Duration must be a positive number",
-//       });
-//     }
-
-//     // FIX: Whitelist fields instead of spreading entire req.body (prevents field injection)
 //     const newTrip = new Trip({
-//       title,
-//       description,
-//       price,
-//       location,
-//       duration,
-//       maxGroupSize,
-//       images,
-//       category,
-//       createdBy: req.user?.id, // attach creator from auth middleware if available
+//       ...req.body,
+//       // images: imageUrls
 //     });
-
 //     await newTrip.save();
-
-//     return res.status(201).json({
-//       success: true,
-//       message: "Trip created successfully",
-//       trip: newTrip,
-//     });
+//     res.status(201).json(newTrip);
 //   } catch (error) {
-//     console.error("createTripBatch error:", error);
-//     // FIX: was returning 400 for all errors — 500 for unexpected server errors
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message || "Server error. Please try again.",
-//     });
+//     res.status(400).json({ message: error.message });
 //   }
-// };
+// }
+
 const createTripBatch = async (req, res) => {
+  try {
+    const newTrip = new Trip({
+      ...req.body,
+    });
 
-    try {
-        const newTrip = new Trip({
-            ...req.body,
-            // images: imageUrls
-        });
-        await newTrip.save();
-        res.status(201).json(newTrip);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
+    await newTrip.save();
+
+    // safer user fetch
+    const users = await user.find({ role: { $ne: "ADMIN" } }).select("_id");
+
+    const notifications = users.map((user) => ({
+      userId: user._id,
+      type: "TRIP",
+      subject: "New Trip Available ✈️",
+      message: `New trip added: ${newTrip.title || newTrip.name}`,
+      tripId: newTrip._id,
+      isRead: false,
+    }));
+
+    if (notifications.length > 0) {
+      try {
+        await Notification.insertMany(notifications);
+      } catch (err) {
+        console.error("Notification insert error:", err);
+      }
     }
-}
 
+    res.status(201).json(newTrip);
 
-// How the data flows now
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// -----------------------------------How the data flows now------------------------------------
 // User clicks "Page 3"
 //   → frontend calls fetchTrip({ page: 3, limit: 6 })
 //     → GET /trip/get?page=3&limit=6
@@ -94,60 +66,25 @@ const createTripBatch = async (req, res) => {
 //           → frontend renders those 6 cards + correct pagination UI
 
 // ─── GET ALL TRIPS (GET) ──────────────────────────────────────────────────────
-// const getTrip = async (req, res) => {
-//   try {
-//     // FIX: Added pagination to avoid crashes on large datasets
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 10;
-//     const skip = (page - 1) * limit;
 
-//     // Optional: filter by category or location via query params
-//     const filter = {};
-//     if (req.query.category) filter.category = req.query.category;
-//     if (req.query.location) filter.location = new RegExp(req.query.location, "i");
-
-//     const total = await Trip.countDocuments(filter);
-//     const trips = await Trip.find(filter)
-//       .sort({ createdAt: -1 })
-//       .skip(skip)
-//       .limit(limit);
-
-//     // FIX: Return empty array with 200 instead of 404 — no trips is not an error
-//     return res.status(200).json({
-//       success: true,
-//       trips,
-//       count: trips.length,
-//       total,
-//       page,
-//       totalPages: Math.ceil(total / limit),
-//     });
-//   } catch (error) {
-//     console.error("getTrip error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: error.message || "Server error. Please try again.",
-//     });
-//   }
-// };
-
-const getTrip = async (req, res) => {
+const getTripWithPagination = async (req, res) => {
   try {
     // Parse + clamp so clients can't request 10,000 docs in one shot
-    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 6));
-    const skip  = (page - 1) * limit;
- 
+    const skip = (page - 1) * limit;
+
     // Optional filters
     const filter = {};
     if (req.query.category) filter.category = req.query.category;
-    if (req.query.location)  filter.location = new RegExp(req.query.location, "i");
- 
+    if (req.query.location) filter.location = new RegExp(req.query.location, "i");
+
     // Run total count and page fetch in parallel — faster than sequential awaits
     const [totalTrips, trips] = await Promise.all([
       Trip.countDocuments(filter),
       Trip.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
     ]);
- 
+
     return res.status(200).json({
       success: true,
       trips,
@@ -161,6 +98,31 @@ const getTrip = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message || "Server error. Please try again." });
   }
 };
+
+const getTrip = async (req, res) => {
+  try {
+    const trips = await Trip.find().sort({ createdAt: -1 });
+
+    if (!trips || trips.length === 0) {            // If no trips found in database, check if data exists
+      return res.status(404).json({
+        success: false,
+        message: "No trips found"
+      });
+    }
+
+    res.status(200).json({             // If trips found 
+      success: true,
+      trip: trips,
+      count: trips.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server Error"
+    });
+  }
+};
+
 
 // ─── GET TRIP BY ID (GET) ─────────────────────────────────────────────────────
 const getTripById = async (req, res) => {
@@ -194,32 +156,6 @@ const updateTrip = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid trip ID format" });
     }
 
-    // // FIX: Whitelist allowed update fields — prevents overwriting sensitive fields like createdBy
-    // const allowedFields = [
-    //   "title",
-    //   "description",
-    //   "price",
-    //   "location",
-    //   "duration",
-    //   "maxGroupSize",
-    //   "images",
-    //   "category",
-    // ];
-
-    // const updateData = {};
-    // allowedFields.forEach((field) => {
-    //   if (req.body[field] !== undefined) {
-    //     updateData[field] = req.body[field];
-    //   }
-    // });
-
-    // if (Object.keys(updateData).length === 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "No valid fields provided for update",
-    //   });
-    // }
-
     // Optional: only the creator or admin can update
     const trip = await Trip.findById(id);
     if (!trip) {
@@ -244,7 +180,7 @@ const updateTrip = async (req, res) => {
         runValidators: true,
       }
     );
-    
+
     return res.status(200).json({
       success: true,
       message: "Trip updated successfully",
@@ -273,7 +209,7 @@ const deleteTrip = async (req, res) => {
     }
 
     if (
-      req.user?.role !== "admin" &&
+      req.user?.role !== "ADMIN" &&
       trip.createdBy?.toString() !== req.user?.id
     ) {
       return res.status(403).json({
@@ -294,125 +230,55 @@ const deleteTrip = async (req, res) => {
   }
 };
 
-module.exports = { createTripBatch, getTrip, getTripById, updateTrip, deleteTrip };
-// const Trip = require("../models/trip");
-// const user = require("../models/user");
+const deployTrip = async (req, res) => {
+  try {
+    const tripData = req.body;
 
-// // Post Method
+    // Optional: backend validation
+    if (!tripData.title || !tripData.price) {
+      return res.status(400).json({
+        success: false,
+        message: "Required fields missing",
+      });
+    }
 
-// const createTripBatch = async (req, res) => {
+    const newTrip = new Trip(tripData);
+    await newTrip.save();
 
-//     try {
-//         const newTrip = new Trip({
-//             ...req.body,
-//             // images: imageUrls
-//         });
-//         await newTrip.save();
-//         res.status(201).json(newTrip);
-//     } catch (error) {
-//         res.status(400).json({ message: error.message });
-//     }
-// }
+    res.status(201).json({
+      success: true,
+      message: "Trip deployed successfully",
+      data: newTrip,
+    });
 
-// // Get MEthod
+  } catch (error) {
+    console.log("deployTrip error:", error.message);
 
-// const getTrip = async (req, res) => {
-//     try {
-//         const trips = await Trip.find().sort({ createdAt: -1 });
-       
-//         if (!trips || trips.length === 0) {            // If no trips found in database, check if data exists
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "No trips found"
-//             });
-//         }
-       
-//         res.status(200).json({             // If trips found 
-//             success: true,
-//             trip: trips,
-//             count: trips.length
-//         });
-//     } catch (error) {
-//         res.status(500).json({
-//             success: false,
-//             message: error.message || "Server Error"
-//         });
-//     }
-// };
+    res.status(500).json({
+      success: false,
+      message: "Server error while deploying trip",
+    });
+  }
+};
 
-// // Get TripById Method
 
-// const getTripById = async (req, res) => {
-//     try {
-//         const { id } = req.params;     // Get trip ID from URL params
-//         const trip = await Trip.findById(id);      // Find trip by MongoDB ID
-//         if (!trip) {
-//             return res.status(404).json({ success: false, message: "Trip Not Found" });
+const aiTrip = async (req, res) => {
+  try {
+    console.log("aiTrip function call")
+    const result = await geminiService.generateTrip(req.body);
+    console.log("result : ", result)
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate trip"
+    });
+  }
+};
 
-//         }
-//         res.status(200).json({ success: true, message: "Trip Is Found", trip });
-//     } catch (error) {
-//         res.status(500).json({ success: false, message: error.message });
-//     }
-// }
 
-// // Update MEthod
 
-// const updateTrip = async (req, res) => {
-//     try {
-//         const { id } = req.params;                       // Get ID from URL
-//         const updatedTrip = await Trip.findByIdAndUpdate(     // Find trip by ID and update with new data
-//             id,
-//             req.body,
-//             {
-//                 new: true,                             // Return updated document
-//                 runValidators: true                     // Apply schema validation
-//             }
-//         );
-//         if (!updatedTrip) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Trip not found"
-//             });
-//         }
-//         return res.status(200).json({
-//             success: true,
-//             message: "Trip updated successfully",
-//             data: updatedTrip
-//         });
-//     } catch (error) {
-//         return res.status(500).json({
-//             success: false,
-//             message: error.message
-//         });
-//     }
-// };
-
-// // delete MEthod
-
-// const deleteTrip = async (req, res) => {
-
-//     try {
-//         const { id } = req.params;                     // Get ID from params
-//         const deletedTrip = await Trip.findByIdAndDelete(id);          // Delete trip from database
-
-//         if (!deletedTrip) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Trip not found"
-//             });
-//         }
-//         return res.status(200).json({
-//             success: true,
-//             message: "Trip deleted successfully"
-//         });
-
-//     } catch (error) {
-//         return res.status(500).json({
-//             success: false,
-//             message: error.message
-//         });
-//     }
-// };
-
-// module.exports = { createTripBatch, getTrip, getTripById, updateTrip, deleteTrip };
+module.exports = { createTripBatch, getTrip, getTripById, updateTrip, deleteTrip, getTripWithPagination, deployTrip, aiTrip };

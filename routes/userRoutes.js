@@ -17,7 +17,6 @@ router.get("/stats", verifyToken, getAdminStats);
 
 router.get("/audit/:id", verifyToken, getAuditUser);
 
-
 // put
 router.put("/update", verifyToken, updatedUser);
 

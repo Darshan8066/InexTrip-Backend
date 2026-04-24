@@ -9,7 +9,3 @@ router.post("/reset-password/:token", resetPassword);
 
 
 module.exports = router;
-// ─────────────────────────────────────────────────────────────────────────────
-// Your frontend authService.js calls:
-//   POST /api/auth/forgot-password        { email }
-//   POST /api/auth/reset-password/:token  { password }

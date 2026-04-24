@@ -1,16 +1,23 @@
+
 const Payment = require("../models/payment");
 const History = require("../models/history");
-
+const Trip = require("../models/trip");
 
 const createPayment = async (req, res) => {
     try {
+        const { userId, tripId, numPersons, paymentMethod, transactionId } = req.body;
 
-        const { userId, tripId, amount, paymentMethod, transactionId } = req.body;
+        // 🔥 Get trip price from DB
+        const trip = await Trip.findById(tripId);
+
+        // 🔥 Calculate total amount
+        const totalAmount = trip.price * numPersons;
 
         const payment = await Payment.create({
             userId,
             tripId,
-            amount,
+            numPersons,
+            amount: totalAmount, 
             paymentMethod,
             transactionId,
             status: "SUCCESS"
@@ -37,7 +44,7 @@ const createPayment = async (req, res) => {
 const getPayments = async (req, res) => {
     try {
         const payments = await Payment.find()
-            .populate('userId', 'fullname profilePhoto -_id');
+            .populate('userId', 'fullname profilePhoto _id');
 
         res.status(200).json({
             success: true,
@@ -77,42 +84,6 @@ const getPaymentsByUserId = async (req, res) => {
 
     }
 }
-
-
-
-
-
-// const savePayment = async (req, res) => {
-//     try {
-
-//         const userId = req.user.id; // from token
-
-//         const { amount, paymentMethod } = req.body;
-
-//         const payment = new Payment({
-//             userId,
-//             transactionId: "TXN" + Date.now(),
-//             amount,
-//             paymentMethod
-//         });
-
-//         await payment.save();
-
-//         res.status(201).json({
-//             success: true,
-//             message: "Payment saved successfully",
-//             payment
-//         });
-
-//     } catch (error) {
-
-//         res.status(500).json({
-//             success: false,
-//             message: error.message || "Server Error"
-//         });
-
-//     }
-// };
 
 
 module.exports = { getPayments, getPaymentsByUserId, createPayment };

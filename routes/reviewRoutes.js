@@ -5,11 +5,12 @@ const router = express.Router();
 const { verifyToken } = require("../middleware/auth");
 const { fetchReview, createReview, fetchReviewByTripId, fetchUserReviews } = require("../controllers/reviewController");
 
-router.get("/", fetchReview);
+//post
 router.post("/create", verifyToken, createReview);
+
+// get
+router.get("/", fetchReview);
 router.get("/trip/:tripId", fetchReviewByTripId);
 router.get("/user", verifyToken , fetchUserReviews);
-
-
 
 module.exports = router;

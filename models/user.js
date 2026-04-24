@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// Define User Schema (structure of User collection)
 const UserSchema = new mongoose.Schema({
 
     fullname: { type: String, required: true },
@@ -12,7 +11,6 @@ const UserSchema = new mongoose.Schema({
     favourites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Trip' }],
     resetPasswordToken: { type: String },
     resetPasswordExpiry: { type: Date },
-    // Activity: { type: String }
 }, {
     timestamps: true   // ✅ automatically adds createdAt & updatedAt
 })

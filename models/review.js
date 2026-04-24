@@ -4,10 +4,10 @@ const ReviewSchema = new mongoose.Schema({
 
     tripId: { type: mongoose.Schema.Types.ObjectId, ref: 'Trip' },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, required: true, trim: true },
     fullname: { type: String },
     profilePhoto: { type: String },
-    rating: { type: Number, required: true, min: 1, max: 5 },
-    comment: { type: String, required: true, trim: true }
 }, {
     timestamps: true   // ✅ automatically adds createdAt & updatedAt
 })

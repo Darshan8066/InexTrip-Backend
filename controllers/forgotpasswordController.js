@@ -3,16 +3,8 @@
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
-const User = require("../models/user"); // adjust path as needed
+const User = require("../models/user"); 
 
-// ── Add these two fields to your UserSchema ──────────────────────────────────
-// resetPasswordToken : { type: String },
-// resetPasswordExpiry: { type: Date  },
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-// POST /api/auth/forgot-password
-// Body: { email }
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -31,22 +23,13 @@ const forgotPassword = async (req, res) => {
 
         user.resetPasswordToken = token;
         user.resetPasswordExpiry = expiry;
-        // console.log("resetPasswordToken :", token)
-        // console.log("resetPasswordExpiry :", expiry)
         await user.save();
 
         // Build the reset link (adjust FRONTEND_URL in your .env)
         const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
         // ── Nodemailer setup ─────────────────────────────────────────────────────
-        // Add to .env:  MAIL_USER=you@gmail.com   MAIL_PASS=your_app_password
-        // const transporter = nodemailer.createTransport({
-        //     service: "gmail",
-        //     auth: {
-        //         user: process.env.MAIL_USER,
-        //         pass: process.env.MAIL_PASS,
-        //     },
-        // });
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -86,17 +69,10 @@ const forgotPassword = async (req, res) => {
     }
 };
 
-
-// const forgotPassword = (req, res) => {
-//     res.json({ message: "If that email exists, a reset link has been sent." });
-// }
-
-// POST /api/auth/reset-password/:token
-// Body: { password }
 const resetPassword = async (req, res) => {
     try {
 
-        console.log("resetPassword",resetPassword)
+        console.log("resetPassword", resetPassword)
         const { token } = req.params;
         const { password } = req.body;
 
@@ -105,9 +81,9 @@ const resetPassword = async (req, res) => {
             resetPasswordExpiry: { $gt: Date.now() }, // token must not be expired
         });
 
-        console.log("token",token)
-        console.log("password :",password)
-        console.log("user :",user)
+        console.log("token", token)
+        console.log("password :", password)
+        console.log("user :", user)
 
         if (!user) {
             return res.status(400).json({ message: "Invalid or expired reset link." });

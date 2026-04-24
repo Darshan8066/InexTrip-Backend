@@ -1,6 +1,5 @@
+
 const History = require("../models/history")
-
-
 
 const saveHistory = async (req, res) => {
     try {
@@ -24,6 +23,7 @@ const saveHistory = async (req, res) => {
 
     }
 };
+
 
 const getHistoryByUser = async (req, res) => {
     try {
@@ -49,7 +49,6 @@ const getHistoryByUser = async (req, res) => {
 
     }
 }
-
 
 const clearHistory = async (req, res) => {
     try {
