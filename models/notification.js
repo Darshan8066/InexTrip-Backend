@@ -1,57 +1,60 @@
-// const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
-// const NotificationSchema = new mongoose.Schema(
-//     {
-//         userId: {
-//             type: mongoose.Schema.Types.ObjectId,
-//             ref: "User",
-//             required: true,
-//         },
+const NotificationSchema = new mongoose.Schema(
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
 
-//         type: {
-//             type: String,
-//             enum: ["USER_REQUEST", "ADMIN_REPLY", "TRIP"],
-//             required: true,
-//         },
+        type: {
+            type: String,
+            enum: ["NEW_TRIP", "TRIP_CANCEL", "CANCEL_STATUS", "SUPPORT_MESSAGE"],
+            required: true,
+        },
 
-//         subject: {
-//             type: String,
-//             required: true,
-//         },
+        title: {
+            type: String,
+            required: true,
+        },
 
-//         message: {
-//             type: String,
-//             default: "",
-//         },
+        message: {
+            type: String,
+            required: true,
+        },
 
-//         resolution: {
-//             type: String,
-//         },
+        // Frontend route to navigate to when notification is clicked
+        link: {
+            type: String,
+            required: true,
+        },
 
-//         requestId: {
-//             type: mongoose.Schema.Types.ObjectId,
-//             ref: "Message",
-//         },
+        isRead: {
+            type: Boolean,
+            default: false,
+        },
 
-//         tripId: {
-//             type: mongoose.Schema.Types.ObjectId,
-//             ref: "Trip",
-//         },
+        // Optional reference IDs for context
+        tripId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Trip",
+        },
 
-//         isRead: {
-//             type: Boolean,
-//             default: false,
-//         },
+        cancellationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Cancellation",
+        },
 
-//         createdBy: {
-//             type: mongoose.Schema.Types.ObjectId,
-//             ref: "User",
-//         },
-//     },
-//     { timestamps: true }
-// );
+        messageId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Message",
+        },
+    },
+    { timestamps: true }
+);
 
-// // 🔥 performance index
-// NotificationSchema.index({ userId: 1, isRead: 1 });
+// Performance index: fetch unread notifications for a user fast
+NotificationSchema.index({ userId: 1, isRead: 1 });
 
-// module.exports = mongoose.model("Notification", NotificationSchema);
+module.exports = mongoose.model("Notification", NotificationSchema);

@@ -7,6 +7,7 @@ const MessageSchema = new mongoose.Schema({
   phone: { type: Number, required: true },
   subject: { type: String, required: true },
   message: { type: String, required: true },
+  resolution: { type: String },
   status: { type: String, enum: ['PENDING', 'RESOLVED'], default: 'PENDING' }
 }, {
   timestamps: true   // ✅ automatically adds createdAt & updatedAt

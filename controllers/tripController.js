@@ -1,53 +1,41 @@
 const mongoose = require("mongoose");
 const Trip = require("../models/trip");
 const { geminiService } = require("../services/geminiService");
-const user = require("../models/user");
+const User = require("../models/user");
+const Notification = require("../models/notification");
+const { emitToAllUsers } = require("../socket/socketManager");
 
 // ─── Helper: validate MongoDB ObjectId ───────────────────────────────────────
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 // ─── CREATE TRIP (POST) ───────────────────────────────────────────────────────
 
-// const createTripBatch = async (req, res) => {
-
-//   try {
-//     const newTrip = new Trip({
-//       ...req.body,
-//       // images: imageUrls
-//     });
-//     await newTrip.save();
-//     res.status(201).json(newTrip);
-//   } catch (error) {
-//     res.status(400).json({ message: error.message });
-//   }
-// }
-
 const createTripBatch = async (req, res) => {
   try {
-    const newTrip = new Trip({
-      ...req.body,
-    });
-
+    const newTrip = new Trip({ ...req.body });
     await newTrip.save();
 
-    // safer user fetch
-    const users = await user.find({ role: { $ne: "ADMIN" } }).select("_id");
+    const users = await User.find({ role: { $ne: "ADMIN" } }).select("_id");
 
-    const notifications = users.map((user) => ({
-      userId: user._id,
-      type: "TRIP",
-      subject: "New Trip Available ✈️",
-      message: `New trip added: ${newTrip.title || newTrip.name}`,
-      tripId: newTrip._id,
-      isRead: false,
-    }));
 
-    if (notifications.length > 0) {
-      try {
-        await Notification.insertMany(notifications);
-      } catch (err) {
-        console.error("Notification insert error:", err);
-      }
+    if (users.length > 0) {
+      const notifData = {
+        type: "NEW_TRIP",
+        title: "New Trip Available ✈️",
+        message: `A new trip has been added: "${newTrip.title || newTrip.name}". Tap to explore!`,
+        link: "/join-trip",
+        tripId: newTrip._id,
+        isRead: false,
+      };
+
+      // 1️⃣  Persist to DB for each user
+      const dbNotifs = users.map((u) => ({ ...notifData, userId: u._id }));
+      await Notification.insertMany(dbNotifs).catch((e) =>
+        console.error("Notification insertMany error:", e)
+      );
+
+      // 2️⃣  Push live to all connected users via Socket.io
+      emitToAllUsers(notifData);
     }
 
     res.status(201).json(newTrip);
